@@ -16,12 +16,12 @@ import String
 --}
 
 type Column 
-    = StringData String -- these names suck now that they have to be exported. Work out something better
-    | FloatData Float
+    = StringCol String -- these names suck now that they have to be exported. Work out something better
+    | FloatCol Float
 
 type Row
     = RowData (List Column)
-    | DataMissing
+    | RowMissing
     
 type alias Header = Row -- header is just a special case of Row
 
@@ -38,17 +38,17 @@ header raw =
     case (String.split "\n" raw) of
         headerRow :: rowsData ->
             String.split "," headerRow
-                |> map StringData
+                |> map StringCol
                 |> RowData
 
         [] ->
-            DataMissing
+            RowMissing
 
 floatColumn : Maybe Float -> Column
 floatColumn columnData =
     -- this is a bad crutch, I think. Should throw a runtime error if there are Maybes since it will cause the data/col count to mismatch
     -- fail fast on broken data
-    FloatData (withDefault 0 columnData)
+    FloatCol (withDefault 0 columnData)
                 
 row : String -> Row
 row rawRow =

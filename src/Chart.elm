@@ -12,10 +12,10 @@ import String
 column : Column -> Html msg
 column columnData =
     case columnData of
-        StringData sd ->
+        StringCol sd ->
             td [] [ text sd ]
 
-        FloatData fd ->
+        FloatCol fd ->
             td [] [ text (String.fromFloat fd) ]
 
 header : Header -> Html msg -- what is `msg` here? What should it be?
@@ -24,7 +24,7 @@ header headerData =
         RowData hd ->
             tr [] (map column hd)
 
-        DataMissing ->
+        RowMissing ->
             tr [] [ text "Missing header data" ]
 
 row : Row -> Html msg
@@ -34,7 +34,7 @@ row rowData =
             map column rd
                 |> tr []
 
-        DataMissing ->
+        RowMissing ->
             tr [] [ text "Missing data row" ]
 
 rows : Rows -> List (Html msg)

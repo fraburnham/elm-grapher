@@ -3,39 +3,39 @@
 
 module Chart exposing (render)
 
-import Csv exposing (Data, Header, Rows, Row)
+import Csv exposing (..) -- (Data, Header, Rows, Row, Column)
 import Html exposing (Html, table, tr, td, text)
 import List exposing (map)
 import String
 
 
+column : Column -> Html msg
+column columnData =
+    case columnData of
+        StringData sd ->
+            td [] [ text sd ]
+
+        FloatData fd ->
+            td [] [ text (String.fromFloat fd) ]
+
 header : Header -> Html msg -- what is `msg` here? What should it be?
 header headerData =
     case headerData of
-        [] ->
-            tr [] [ td [] [ text "No header data found" ] ]
+        RowData hd ->
+            tr [] (map column hd)
 
-        [ a, b ] ->
-            tr [] [ td [] [ text a ]
-                  , td [] [ text b ]
-                  ]
-
-        a :: rest ->
-            tr [] [ td [] [ text "Too much header data found" ] ]
+        DataMissing ->
+            tr [] [ text "Missing header data" ]
 
 row : Row -> Html msg
 row rowData =
     case rowData of
-        [] ->
-            tr [] [ td [] [ text "No row data found" ] ]
+        RowData rd ->
+            map column rd
+                |> tr []
 
-        [ a, b ] ->
-            tr [] [ td [] [ text (String.fromFloat a) ]
-                  , td [] [ text (String.fromFloat b) ]
-                  ]
-
-        a :: rest ->
-            tr [] [ td [] [ text "Too much row data found" ] ]           
+        DataMissing ->
+            tr [] [ text "Missing data row" ]
 
 rows : Rows -> List (Html msg)
 rows rowsData =

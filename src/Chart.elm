@@ -18,6 +18,9 @@ column columnData =
         FloatCol fd ->
             td [] [ text (String.fromFloat fd) ]
 
+        ColumnMissing ->
+            td [] [ text "Missing column data" ]
+
 header : Header -> Html msg -- what is `msg` here? What should it be?
 header headerData =
     case headerData of
@@ -27,6 +30,9 @@ header headerData =
         RowMissing ->
             tr [] [ text "Missing header data" ]
 
+        RowIncomplete rd ->
+            tr [] [ text "Missing some header columns" ]
+
 row : Row -> Html msg
 row rowData =
     case rowData of
@@ -35,7 +41,10 @@ row rowData =
                 |> tr []
 
         RowMissing ->
-            tr [] [ text "Missing data row" ]
+            tr [] [ text "Missing row data" ]
+
+        RowIncomplete rd ->
+            tr [] [ text "Missing some data columns" ]
 
 rows : Rows -> List (Html msg)
 rows rowsData =

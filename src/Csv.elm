@@ -2,7 +2,7 @@ module Csv exposing (..) --(Data, Rows, Row, Header, Column, parse)
 -- What does the expose ened to look like now? I need `StringData` and such
 -- to be exposed, but I must be doing it wrong...
 
-import List exposing (head, tail, map)
+import List exposing (head, tail, map, member)
 import Maybe exposing (withDefault)
 import String
 
@@ -16,11 +16,13 @@ import String
 --}
 
 type Column 
-    = StringCol String -- these names suck now that they have to be exported. Work out something better
+    = StringCol String
     | FloatCol Float
+    | ColumnMissing
 
 type Row
     = RowData (List Column)
+    | RowIncomplete (List Column) -- This is separately accounted for from ColumnMissing because it gives the caller some flexibility in how to display/render the issue
     | RowMissing
     
 type alias Header = Row -- header is just a special case of Row
@@ -46,16 +48,28 @@ header raw =
 
 floatColumn : Maybe Float -> Column
 floatColumn columnData =
-    -- this is a bad crutch, I think. Should throw a runtime error if there are Maybes since it will cause the data/col count to mismatch
-    -- fail fast on broken data
-    FloatCol (withDefault 0 columnData)
+    case columnData of
+        Just data ->
+            FloatCol data
+
+        Nothing ->
+            ColumnMissing
                 
 row : String -> Row
 row rawRow =
-    String.split "," rawRow
-        |> map String.toFloat
-        |> map floatColumn
-        |> RowData
+    let
+        rowData =
+            String.split "," rawRow
+                |> map String.toFloat
+                |> map floatColumn
+    in
+        -- check if any members are missing by comparing the count to the header count
+        -- and by checking if any are ColumnMissing
+        if member ColumnMissing rowData then
+            RowIncomplete rowData
+        else
+            RowData rowData
+            
 
 rows : String -> Rows
 rows raw =

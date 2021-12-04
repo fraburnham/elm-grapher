@@ -2,7 +2,7 @@ module Csv exposing (..) --(Data, Rows, Row, Header, Column, parse)
 -- What does the expose ened to look like now? I need `StringData` and such
 -- to be exposed, but I must be doing it wrong...
 
-import List exposing (head, tail, map, member)
+import List exposing (head, tail, map, member, length)
 import Maybe exposing (withDefault)
 import String
 
@@ -54,32 +54,47 @@ floatColumn columnData =
 
         Nothing ->
             ColumnMissing
+
+rowLength : Row -> Int
+rowLength rowData =
+    case rowData of
+        RowData rd ->
+            length rd
+
+        RowIncomplete rd ->
+            length rd
+
+        RowMissing ->
+            0
                 
-row : String -> Row
-row rawRow =
+row : Int -> String -> Row
+row headerColumnCount rawRow =
     let
         rowData =
             String.split "," rawRow
                 |> map String.toFloat
                 |> map floatColumn
     in
-        -- check if any members are missing by comparing the count to the header count
-        -- and by checking if any are ColumnMissing
         if member ColumnMissing rowData then
+            RowIncomplete rowData
+        -- this else if doesn't use rowLength because `rowData` is a `List Column` until this fn returns it as a `Row`
+        else if length rowData /= headerColumnCount then
             RowIncomplete rowData
         else
             RowData rowData
-            
 
-rows : String -> Rows
-rows raw =
+rows : Int -> String -> Rows
+rows headerColumnCount raw =
     case String.split "\n" raw of
         headerRow :: rowsData ->
-            map row rowsData
+            map (row headerColumnCount) rowsData
 
         [] ->
             []
 
 parse : String -> Data
 parse raw =
-    Data (header raw) (rows raw)
+    let
+        headerData = header raw
+    in
+    Data headerData (rows (rowLength headerData) raw)

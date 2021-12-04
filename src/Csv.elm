@@ -1,4 +1,4 @@
-module Csv exposing (..) -- TODO: only expose what is needed to make the intended interface clear!
+module Csv exposing (Data, Rows, Row, Header, parse)
 
 import List exposing (head, tail, map)
 import Maybe exposing (withDefault)
@@ -51,7 +51,7 @@ rows raw =
             map row rawRows
 
         Nothing ->
-            [[0,0]]
+            [[0,0]] -- could this be `[]`?
 
 parse : String -> Data
 parse raw =

@@ -1,4 +1,6 @@
-module Csv exposing (Data, Rows, Row, Header, parse)
+module Csv exposing (..) --(Data, Rows, Row, Header, Column, parse)
+-- What does the expose ened to look like now? I need `StringData` and such
+-- to be exposed, but I must be doing it wrong...
 
 import List exposing (head, tail, map)
 import Maybe exposing (withDefault)
@@ -13,45 +15,56 @@ import String
  you don't need to.
 --}
 
-type alias Row = List Float
+type Column 
+    = StringData String -- these names suck now that they have to be exported. Work out something better
+    | FloatData Float
 
-type alias Header = List String
+type Row
+    = RowData (List Column)
+    | DataMissing
+    
+type alias Header = Row -- header is just a special case of Row
 
-type alias Rows = List Row
+type alias Rows = List Row -- maybe make this the same shape as Row
 
 type alias Data =
     { header : Header
     , rows : Rows
     }
 
-{--
- seeing lots of notes in the docs about using `case` to deconstruct a `List` because it gives
- you (x :: xs). Need to figure out how that pattern looks. Should replace these with that.
---}
+
 header : String -> Header
 header raw =
-    case head (String.split "\n" raw) of
-        Just sr ->
-            String.split "," sr
+    case (String.split "\n" raw) of
+        headerRow :: rowsData ->
+            String.split "," headerRow
+                |> map StringData
+                |> RowData
 
-        Nothing ->
-            ["", ""] -- have to return a list to end the Maybe madness (there is probably a better pattern to learn here...)
+        [] ->
+            DataMissing
 
+floatColumn : Maybe Float -> Column
+floatColumn columnData =
+    -- this is a bad crutch, I think. Should throw a runtime error if there are Maybes since it will cause the data/col count to mismatch
+    -- fail fast on broken data
+    FloatData (withDefault 0 columnData)
+                
 row : String -> Row
 row rawRow =
     String.split "," rawRow
         |> map String.toFloat
-        |> map (withDefault 0) -- this is a bad crutch, I think. Should throw a runtime error if there are Maybes since it will cause the data/col count to mismatch
-           -- fail fast on broken data
+        |> map floatColumn
+        |> RowData
 
 rows : String -> Rows
 rows raw =
-    case tail (String.split "\n" raw) of
-        Just rawRows ->
-            map row rawRows
+    case String.split "\n" raw of
+        headerRow :: rowsData ->
+            map row rowsData
 
-        Nothing ->
-            [[0,0]] -- could this be `[]`?
+        [] ->
+            []
 
 parse : String -> Data
 parse raw =

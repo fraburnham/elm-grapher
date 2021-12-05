@@ -3,7 +3,7 @@
 
 module Chart exposing (render)
 
-import Csv exposing (..) -- (Data, Header, Rows, Row, Column)
+import Csv exposing (Data, Header, Rows, Row(..), Column(..))
 import Html exposing (Html, table, tr, td, text)
 import List exposing (map)
 import String

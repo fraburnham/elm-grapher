@@ -1,6 +1,4 @@
-module Csv exposing (..) --(Data, Rows, Row, Header, Column, parse)
--- What does the expose ened to look like now? I need `StringData` and such
--- to be exposed, but I must be doing it wrong...
+module Csv exposing (Data, Rows, Row(..), Header, Column(..), parse)
 
 import List exposing (head, tail, map, member, length)
 import Maybe exposing (withDefault)

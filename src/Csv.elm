@@ -70,8 +70,7 @@ row headerColumnCount rawRow =
     let
         rowData =
             String.split "," rawRow
-                |> map String.toFloat
-                |> map floatColumn
+                |> map (String.toFloat >> floatColumn)
     in
         if member ColumnMissing rowData then
             RowIncomplete rowData

@@ -1,8 +1,6 @@
-module Csv exposing (..) --(Data, Rows, Row, Header, Column, parse)
--- What does the expose ened to look like now? I need `StringData` and such
--- to be exposed, but I must be doing it wrong...
+module Csv exposing (Data, Rows, Row(..), Header, Column(..), parse)
 
-import List exposing (head, tail, map)
+import List exposing (head, tail, map, member, length)
 import Maybe exposing (withDefault)
 import String
 
@@ -16,12 +14,14 @@ import String
 --}
 
 type Column 
-    = StringData String -- these names suck now that they have to be exported. Work out something better
-    | FloatData Float
+    = StringCol String
+    | FloatCol Float
+    | ColumnMissing
 
 type Row
     = RowData (List Column)
-    | DataMissing
+    | RowIncomplete (List Column) -- This is separately accounted for from ColumnMissing because it gives the caller some flexibility in how to display/render the issue
+    | RowMissing
     
 type alias Header = Row -- header is just a special case of Row
 
@@ -38,34 +38,60 @@ header raw =
     case (String.split "\n" raw) of
         headerRow :: rowsData ->
             String.split "," headerRow
-                |> map StringData
+                |> map StringCol
                 |> RowData
 
         [] ->
-            DataMissing
+            RowMissing
 
 floatColumn : Maybe Float -> Column
 floatColumn columnData =
-    -- this is a bad crutch, I think. Should throw a runtime error if there are Maybes since it will cause the data/col count to mismatch
-    -- fail fast on broken data
-    FloatData (withDefault 0 columnData)
-                
-row : String -> Row
-row rawRow =
-    String.split "," rawRow
-        |> map String.toFloat
-        |> map floatColumn
-        |> RowData
+    case columnData of
+        Just data ->
+            FloatCol data
 
-rows : String -> Rows
-rows raw =
+        Nothing ->
+            ColumnMissing
+
+rowLength : Row -> Int
+rowLength rowData =
+    case rowData of
+        RowData rd ->
+            length rd
+
+        RowIncomplete rd ->
+            length rd
+
+        RowMissing ->
+            0
+                
+row : Int -> String -> Row
+row headerColumnCount rawRow =
+    let
+        rowData =
+            String.split "," rawRow
+                |> map (String.toFloat >> floatColumn)
+    in
+        if member ColumnMissing rowData then
+            RowIncomplete rowData
+        -- this else if doesn't use rowLength because `rowData` is a `List Column` until this fn returns it as a `Row`
+        else if length rowData /= headerColumnCount then
+            RowIncomplete rowData
+        else
+            RowData rowData
+
+rows : Int -> String -> Rows
+rows headerColumnCount raw =
     case String.split "\n" raw of
         headerRow :: rowsData ->
-            map row rowsData
+            map (row headerColumnCount) rowsData
 
         [] ->
             []
 
 parse : String -> Data
 parse raw =
-    Data (header raw) (rows raw)
+    let
+        headerData = header raw
+    in
+    Data headerData (rows (rowLength headerData) raw)

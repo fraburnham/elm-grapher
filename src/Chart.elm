@@ -3,7 +3,7 @@
 
 module Chart exposing (render)
 
-import Csv exposing (Data, Header, Rows, Row(..), Column(..))
+import Csv exposing (Data, Header, Rows, Row(..), Column, ColumnData(..), ColumnName)
 import Html exposing (Html, table, tr, td, text)
 import List exposing (map)
 import String
@@ -11,27 +11,23 @@ import String
 
 column : Column -> Html msg
 column columnData =
-    case columnData of
+    case columnData.data of
         StringCol sd ->
             td [] [ text sd ]
 
         FloatCol fd ->
             td [] [ text (String.fromFloat fd) ]
 
-        ColumnMissing ->
+        MissingColData ->
             td [] [ text "Missing column data" ]
+
+renderHeader : String -> Html msg
+renderHeader headerData =
+    td [] [ text headerData ]
 
 header : Header -> Html msg -- what is `msg` here? What should it be?
 header headerData =
-    case headerData of
-        RowData hd ->
-            tr [] (map column hd)
-
-        RowMissing ->
-            tr [] [ text "Missing header data" ]
-
-        RowIncomplete rd ->
-            tr [] [ text "Missing some header columns" ]
+    tr [] (map renderHeader headerData)
 
 row : Row -> Html msg
 row rowData =
@@ -39,9 +35,6 @@ row rowData =
         RowData rd ->
             map column rd
                 |> tr []
-
-        RowMissing ->
-            tr [] [ text "Missing row data" ]
 
         RowIncomplete rd ->
             tr [] [ text "Missing some data columns" ]

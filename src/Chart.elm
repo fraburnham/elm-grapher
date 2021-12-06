@@ -21,13 +21,13 @@ column columnData =
         MissingColData ->
             td [] [ text "Missing column data" ]
 
-renderHeader : String -> Html msg
-renderHeader headerData =
+headerColumn : String -> Html msg
+headerColumn headerData =
     td [] [ text headerData ]
 
 header : Header -> Html msg -- what is `msg` here? What should it be?
 header headerData =
-    tr [] (map renderHeader headerData)
+    tr [] (map headerColumn headerData)
 
 row : Row -> Html msg
 row rowData =

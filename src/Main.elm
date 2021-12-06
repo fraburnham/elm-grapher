@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Chart
+import Chart.Prepare as Prepare
 import Csv
 import File exposing (File)
 import File.Select as Select
@@ -26,20 +27,31 @@ main =
         , subscriptions = subscriptions
         }
 
+type Render
+    = NoData
+    | MakeSelections
+    | ReadyToRender
 
 type alias Model =
-    { csvData : Maybe Csv.Data -- This is a maybe so that we can pattern match to display the right stuff
+    { csvData : Csv.Data -- This is a maybe so that we can pattern match to display the right stuff
+    , xCol : String
+    , yCol : String
+    , render : Render
     }
 
 init : () -> (Model, Cmd Msg)
 init _ =
-    ( Model Nothing, Cmd.none )
+    ( Model (Csv.Data [] []) "" "" NoData
+    , Cmd.none )
 
 
 type Msg
     = RequestFile
     | FileSelected File
     | DataLoaded String
+    | XColUpdated String
+    | YColUpdated String
+    | DoRender
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -54,20 +66,46 @@ update msg model =
             , Task.perform DataLoaded (File.toString file)
             )
 
+        XColUpdated x ->
+            ( { model | xCol = x }
+            , Cmd.none
+            )
+
+        YColUpdated y ->
+            ( { model | yCol = y }
+            , Cmd.none
+            )
+
         DataLoaded data ->
-            ( { model | csvData = Just (Csv.parse data) }
+            ( { model | csvData = Csv.parse data, render = MakeSelections }
+            , Cmd.none
+            )
+
+        DoRender ->
+            -- needs error handling to make sure both xCol and yCol are set
+            ( { model | render = ReadyToRender }
             , Cmd.none
             )
 
 
 view : Model -> Html Msg
 view model =
-    case model.csvData of
-        Nothing ->
+    case model.render of
+        NoData ->
             button [ onClick RequestFile ] [ text "Load CSV" ]
 
-        Just data ->
-            Chart.render data
+        MakeSelections ->
+            div [] [ input [ onInput XColUpdated
+                           , placeholder "Column to use for x axis"
+                           ] []
+                   , input [ onInput YColUpdated
+                           , placeholder "Column to use for y axis"
+                           ] []
+                   , button [ onClick DoRender ] [ text "Render" ]
+                   ]
+
+        ReadyToRender ->
+            Chart.render (Prepare.data [ model.xCol, model.yCol ] model.csvData)
 
 
 subscriptions : Model -> Sub Msg

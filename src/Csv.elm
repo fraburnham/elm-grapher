@@ -4,6 +4,7 @@ import List exposing (head, tail, map, map2, member, length)
 import Maybe exposing (withDefault)
 import String
 
+
 type alias ColumnName = String
 
 type ColumnData

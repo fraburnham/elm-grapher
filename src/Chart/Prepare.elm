@@ -4,15 +4,15 @@ import Csv
 import List exposing (map, indexedMap, filter, member)
 
 
+-- Gonna keep the MissingData at the Column level for now to simplify
+-- the scaling code
 type Column
     = FloatCol Float
     | MissingColData
 
-type alias RowTuple = (Column, Column)
-
-type Row
-    = RowData RowTuple
-    | RowIncomplete
+-- I wonder if this can be a list with only two elements instead so that map keeps working
+-- Oh duh. Refactor a row to be a record { x : Column, y : Column }
+type alias Row = (Column, Column)
 
 type alias Rows = List Row
 
@@ -46,6 +46,8 @@ headerColumn selectedColumns headerColData =
 header : List String -> Csv.Header -> Header
 header selectedColumns headerData =
     case filter (headerColumn selectedColumns) headerData of
+        -- this has a bug! It needs to order the tuple correctly
+        -- it also needs to account for the incomplete state
         [ x, y ] ->
             HeaderData (Tuple.pair x y)
 
@@ -63,16 +65,18 @@ row selectedColumns rowData =
     case rowData of
         Csv.RowData rd ->
             case filter (column selectedColumns) rd |> map (.data >> coerceColumnData) of
+                -- this has a bug! It needs to order the tuple correctly
+                -- it also needs to account for the incomplete state
                 [ x, y ] ->
-                    RowData (Tuple.pair x y) 
+                    (x, y)
 
                 [] ->
-                    RowIncomplete
+                    (MissingColData, MissingColData)
                 a :: rest ->
-                    RowIncomplete -- This is really a different type of error...
+                    (MissingColData, MissingColData)
 
         Csv.RowIncomplete _ ->
-            RowIncomplete
+            (MissingColData, MissingColData)
 
 rows : List String -> Csv.Rows -> Rows
 rows selectedColumns rowsData =

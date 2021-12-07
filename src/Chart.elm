@@ -1,6 +1,7 @@
 module Chart exposing (render)
 
-import Chart.Prepare exposing (Data, Header(..), Rows, Row(..), Column(..))
+import Chart.Prepare exposing (Data, Header(..), Rows, Row, Column(..))
+import Chart.Scale as Scale exposing (Bounds, Bound)
 import Html exposing (Html, table, tr, td, text)
 import List exposing (map)
 import String
@@ -33,14 +34,9 @@ header headerData =
 
 row : Row -> Html msg
 row rowData =
-    case rowData of
-        RowData rd ->
-            tr [] [ column (first rd)
-                  , column (second rd)
-                  ]
-
-        RowIncomplete ->
-            tr [] [ text "Missing some data" ]
+    tr [] [ column (first rowData)
+          , column (second rowData)
+          ]
 
 rows : Rows -> List (Html msg)
 rows rowsData =
@@ -49,8 +45,10 @@ rows rowsData =
 render : Data -> Html msg
 render chartData =
     let
-        -- before rendering scale the data! I think this fn makes sense since it will end up knowing the bounds of the chart
+        scaledData =
+            Scale.data (Bounds (Bound 0.0 300.0) (Bound 0.0 300)) chartData
+
         renderedData =
-            (header chartData.header) :: (rows chartData.rows)
+            (header scaledData.header) :: (rows scaledData.rows)
     in
     table [] renderedData

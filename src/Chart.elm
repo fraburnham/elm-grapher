@@ -1,6 +1,6 @@
 module Chart exposing (render)
 
-import Chart.Prepare exposing (Data, Header(..), Rows, Row, Column(..))
+import Chart.Prepare exposing (Data, Header, Rows, Row, Column)
 import Chart.Scale as Scale exposing (Bounds, Bound)
 import Html exposing (Html, table, tr, td, text)
 import List exposing (map)
@@ -10,12 +10,7 @@ import Tuple exposing (first, second)
 
 column : Column -> Html msg
 column columnData =
-    case columnData of
-        FloatCol fd ->
-            td [] [ text (String.fromFloat fd) ]
-
-        MissingColData ->
-            td [] [ text "Missing column data" ]
+    td [] [ text (String.fromFloat columnData) ]
 
 headerColumn : String -> Html msg
 headerColumn headerData =
@@ -23,14 +18,9 @@ headerColumn headerData =
 
 header : Header -> Html msg -- what is `msg` here? What should it be?
 header headerData =
-    case headerData of
-        HeaderData hd ->
-            tr [] [ headerColumn (first hd)
-                  , headerColumn (second hd)
-                  ]
-
-        HeaderIncomplete ->
-            tr [] [ text "Busted header data" ]
+    tr [] [ headerColumn (first headerData)
+          , headerColumn (second headerData)
+          ]
 
 row : Row -> Html msg
 row rowData =

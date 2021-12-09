@@ -1,7 +1,7 @@
 module Chart.Scale exposing (Bounds, Bound, data)
 
-import Chart.Prepare exposing (Data, Header(..), Rows, Row, Column(..))
-import List exposing (filter, map, maximum, minimum)
+import Chart.Prepare exposing (Data, Header, Rows, Row, Column)
+import List exposing (filter, map, maximum, minimum, unzip)
 import Tuple exposing (first, second)
 
 
@@ -22,48 +22,24 @@ type alias Bounds =
     }
 
 
-colHasData : Column -> Bool
-colHasData col =
-    case col of
-        FloatCol _ ->
-            True
-        MissingColData ->
-            False
-
--- this is wrong since the row has had invalid data
--- filtered out why do I still need to corece it?
--- must be an issue with the type modeling
-coerceColumnData : Column -> Float
-coerceColumnData col =
-    case col of
-        FloatCol f ->
-            f
-
-        MissingColData ->
-            0
-
 colExtreme : (List Float -> Maybe Float) -> List Column -> Float
 colExtreme fn cols =
-    let
-        filteredCols =
-            filter colHasData cols
-                |> map coerceColumnData
-                |> fn
-    in
-        case filteredCols of
-            Just fc ->
-                fc
+    case fn cols of
+        Just fc ->
+            fc
 
-            Nothing ->
-                0
+        Nothing ->
+            0
 
 scaleFactors : Bounds -> Rows -> ScaleFactors
 scaleFactors bounds rowsData =
     let
+        unzipped =
+            unzip rowsData
         xColumns =
-            map first rowsData
+            first unzipped
         yColumns =
-            map second rowsData
+            second unzipped
 
         getMax =
             colExtreme maximum
@@ -81,12 +57,7 @@ scaleFactors bounds rowsData =
 
 column : Float -> Column -> Column
 column scaleFactor colData =
-    case colData of
-        FloatCol f ->
-            FloatCol (f * scaleFactor)
-
-        MissingColData ->
-            MissingColData  -- should these get removed earlier on?
+    colData * scaleFactor
 
 row : ScaleFactors -> Row -> Row
 row sf rowData =

@@ -5,28 +5,19 @@ import Chart.Scale as Scale exposing (Bounds, Bound)
 import Html exposing (Html, table, tr, td, text)
 import List exposing (map)
 import String
+import Svg exposing (svg, circle)
+import Svg.Attributes exposing (..)
 import Tuple exposing (first, second)
 
 
-column : Column -> Html msg
-column columnData =
-    td [] [ text (String.fromFloat columnData) ]
-
-headerColumn : String -> Html msg
-headerColumn headerData =
-    td [] [ text headerData ]
-
-header : Header -> Html msg -- what is `msg` here? What should it be?
-header headerData =
-    tr [] [ headerColumn (first headerData)
-          , headerColumn (second headerData)
-          ]
-
 row : Row -> Html msg
 row rowData =
-    tr [] [ column (first rowData)
-          , column (second rowData)
-          ]
+    circle
+        [ cx (String.fromFloat (first rowData))
+        , cy (String.fromFloat (second rowData))
+        , r "2"
+        ]
+        []
 
 rows : Rows -> List (Html msg)
 rows rowsData =
@@ -37,8 +28,13 @@ render chartData =
     let
         scaledData =
             Scale.data (Bounds (Bound 0.0 300.0) (Bound 0.0 300)) chartData
-
-        renderedData =
-            (header scaledData.header) :: (rows scaledData.rows)
     in
-    table [] renderedData
+        -- put the svg in a table? div?
+        -- so that the header data can be placed on each axis
+        -- should also have regular marks so that it is easy to
+        -- tell what is where
+        svg [ width "300"
+            , height "300"
+            , viewBox "0 0 305 305"
+            ]
+            (rows scaledData.rows)

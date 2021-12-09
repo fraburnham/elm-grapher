@@ -1,4 +1,4 @@
-module Csv exposing (Data, Rows, Row(..), Header, Column, ColumnData(..), ColumnName, parse)
+module Csv exposing (Data, Rows, Row, Header, Column, ColumnData(..), ColumnName, parse)
 
 import List exposing (head, tail, map, map2, member, length)
 import Maybe exposing (withDefault)
@@ -17,9 +17,7 @@ type alias Column =
     , data : ColumnData
     }
 
-type Row
-    = RowData (List Column)
-    | RowIncomplete (List Column) -- This is separately accounted for from ColumnMissing because it gives the caller some flexibility in how to display/render the issue
+type alias Row = List Column
     
 type alias Header = List ColumnName
 
@@ -52,28 +50,11 @@ floatColumn columnData columnName =
 -- may be able to delete this now
 rowLength : Row -> Int
 rowLength rowData =
-    case rowData of
-        RowData rd ->
-            length rd
-
-        RowIncomplete rd ->
-            length rd
+    length rowData
 
 row : Header -> String -> Row
 row headerData rawRow =
-    let
-        headerColumnCount =
-            length headerData
-
-        rowData =
-            map2 (String.toFloat >> floatColumn) (String.split "," rawRow) headerData
-    in
-        if member MissingColData (map .data rowData) then
-            RowIncomplete rowData
-        else if length rowData /= headerColumnCount then
-            RowIncomplete rowData
-        else
-            RowData rowData
+    map2 (String.toFloat >> floatColumn) (String.split "," rawRow) headerData
 
 rows : Header -> String -> Rows
 rows headerData raw =

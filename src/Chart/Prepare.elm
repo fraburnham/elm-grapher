@@ -1,26 +1,21 @@
 module Chart.Prepare exposing (..)
 
 import Csv
-import List exposing (map, indexedMap, filter, member)
+import List exposing (foldr, map, indexedMap, filter, member)
 
-
--- Gonna keep the MissingData at the Column level for now to simplify
--- the scaling code
-type Column
-    = FloatCol Float
-    | MissingColData
 
 -- I wonder if this can be a list with only two elements instead so that map keeps working
 -- Oh duh. Refactor a row to be a record { x : Column, y : Column }
+type alias Column = Float
+
+-- temp type to transition from Csv.Row to Row
+type alias TupleRow = (Csv.ColumnData, Csv.ColumnData)
+
 type alias Row = (Column, Column)
 
 type alias Rows = List Row
 
-type alias HeaderTuple = (String, String)
-
-type Header
-    = HeaderData HeaderTuple
-    | HeaderIncomplete
+type alias Header = (String, String)
 
 type alias Data =
     { header : Header
@@ -28,16 +23,18 @@ type alias Data =
     }
 
 
-coerceColumnData : Csv.ColumnData -> Column
-coerceColumnData columnData =
-    case columnData of
-        Csv.FloatCol f ->
-            FloatCol f
+coerceRowData : TupleRow -> Rows -> Rows
+coerceRowData rowData result =
+    let
+        -- may be able to do this w/o the let
+        (x,y) = rowData
+    in
+    case (x,y) of
+        (Csv.FloatCol xf, Csv.FloatCol yf) ->
+            (xf,yf) :: result
 
-        Csv.StringCol _ ->
-            MissingColData
-        Csv.MissingColData ->
-            MissingColData
+        (_, _) ->
+            result
 
 headerColumn : List String -> String -> Bool
 headerColumn selectedColumns headerColData =
@@ -49,38 +46,30 @@ header selectedColumns headerData =
         -- this has a bug! It needs to order the tuple correctly
         -- it also needs to account for the incomplete state
         [ x, y ] ->
-            HeaderData (Tuple.pair x y)
+            (x, y)
 
-        [] ->
-            HeaderIncomplete
-        a :: rest ->
-            HeaderIncomplete
+        _ ->
+            ("Missing header data", "Missing header data")
 
 column : List String -> Csv.Column -> Bool
 column selectedColumns columnData =
     member columnData.name selectedColumns
 
-row : List String -> Csv.Row -> Row
+row : List String -> Csv.Row -> TupleRow
 row selectedColumns rowData =
-    case rowData of
-        Csv.RowData rd ->
-            case filter (column selectedColumns) rd |> map (.data >> coerceColumnData) of
-                -- this has a bug! It needs to order the tuple correctly
-                -- it also needs to account for the incomplete state
-                [ x, y ] ->
-                    (x, y)
-
-                [] ->
-                    (MissingColData, MissingColData)
-                a :: rest ->
-                    (MissingColData, MissingColData)
-
-        Csv.RowIncomplete _ ->
-            (MissingColData, MissingColData)
-
+    case filter (column selectedColumns) rowData of
+        -- this has a bug! It needs to order the tuple correctly
+        -- it also needs to account for the incomplete state
+        [ x, y ] ->
+            (x.data,y.data)
+                
+        _ ->
+            (Csv.MissingColData, Csv.MissingColData)
+                            
 rows : List String -> Csv.Rows -> Rows
 rows selectedColumns rowsData =
     map (row selectedColumns) rowsData
+        |> foldr coerceRowData []
 
 data : List String -> Csv.Data -> Data
 data selectedColumns csvData = -- tighten up selectedColumns to be a tuple? I want to know only 2 were selected

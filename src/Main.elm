@@ -109,7 +109,7 @@ view model =
                 ]
 
         ReadyToRender ->
-            Chart.render (Prepare.data [ model.xCol, model.yCol ] model.csvData)
+            Chart.render (Prepare.data ( model.xCol, model.yCol ) model.csvData)
 
 
 subscriptions : Model -> Sub Msg

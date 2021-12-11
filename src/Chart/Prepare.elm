@@ -48,45 +48,66 @@ coerceRowData rowData result =
             result
 
 
-headerColumn : List String -> String -> Bool
-headerColumn selectedColumns headerColData =
-    member headerColData selectedColumns
+headerColumn : ( String, String ) -> String -> Bool
+headerColumn ( xCol, yCol ) headerColData =
+    if xCol == headerColData then
+        True
+
+    else if yCol == headerColData then
+        True
+
+    else
+        False
 
 
-header : List String -> Csv.Header -> Header
+header : ( String, String ) -> Csv.Header -> Header
 header selectedColumns headerData =
+    let
+        ( xCol, yCol ) =
+            selectedColumns
+    in
     case filter (headerColumn selectedColumns) headerData of
-        -- this has a bug! It needs to order the tuple correctly
-        [ x, y ] ->
-            ( x, y )
+        [ _, _ ] ->
+            ( xCol, yCol )
 
         _ ->
             ( "Missing header data", "Missing header data" )
 
 
-column : List String -> Csv.Column -> Bool
-column selectedColumns columnData =
+column : ( String, String ) -> Csv.Column -> Bool
+column ( xCol, yCol ) columnData =
+    let
+        selectedColumns =
+            [ xCol, yCol ]
+    in
     member columnData.name selectedColumns
 
 
-row : List String -> Csv.Row -> TupleRow
+row : ( String, String ) -> Csv.Row -> TupleRow
 row selectedColumns rowData =
+    let
+        ( xCol, _ ) =
+            selectedColumns
+    in
     case filter (column selectedColumns) rowData of
-        -- this has a bug! It needs to order the tuple correctly
         [ x, y ] ->
-            ( x.data, y.data )
+            if x.name == xCol then
+                ( x.data, y.data )
+
+            else
+                ( y.data, x.data )
 
         _ ->
             ( Csv.MissingColData, Csv.MissingColData )
 
 
-rows : List String -> Csv.Rows -> Rows
+rows : ( String, String ) -> Csv.Rows -> Rows
 rows selectedColumns rowsData =
     map (row selectedColumns) rowsData
         |> foldr coerceRowData []
 
 
-data : List String -> Csv.Data -> Data
+data : ( String, String ) -> Csv.Data -> Data
 data selectedColumns csvData =
     -- tighten up selectedColumns to be a tuple? I want to know only 2 were selected
     Data (header selectedColumns csvData.header) (rows selectedColumns csvData.rows)

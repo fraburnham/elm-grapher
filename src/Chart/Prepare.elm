@@ -1,23 +1,17 @@
-module Chart.Prepare exposing (..)
+module Chart.Prepare exposing (Column, Data, Row, Rows, data)
 
 import Csv
-import List exposing (filter, foldr, indexedMap, map, member)
-
-
-
--- I wonder if this can be a list with only two elements instead so that map keeps working
--- Oh duh. Refactor a row to be a record { x : Column, y : Column }
+import List exposing (filter, foldr, map, member)
 
 
 type alias Column =
+    -- I wonder if this can be a list with only two elements instead so that map keeps working
+    -- Oh duh. Refactor a row to be a record { x : Column, y : Column }
     Float
 
 
-
--- temp type to transition from Csv.Row to Row
-
-
 type alias TupleRow =
+    -- temp type to transition from Csv.Row to Row
     ( Csv.ColumnData, Csv.ColumnData )
 
 
@@ -63,7 +57,6 @@ header : List String -> Csv.Header -> Header
 header selectedColumns headerData =
     case filter (headerColumn selectedColumns) headerData of
         -- this has a bug! It needs to order the tuple correctly
-        -- it also needs to account for the incomplete state
         [ x, y ] ->
             ( x, y )
 
@@ -80,7 +73,6 @@ row : List String -> Csv.Row -> TupleRow
 row selectedColumns rowData =
     case filter (column selectedColumns) rowData of
         -- this has a bug! It needs to order the tuple correctly
-        -- it also needs to account for the incomplete state
         [ x, y ] ->
             ( x.data, y.data )
 

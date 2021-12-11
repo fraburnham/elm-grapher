@@ -1,12 +1,8 @@
 module Chart.Scale exposing (Bound, Bounds, data)
 
-import Chart.Prepare exposing (Column, Data, Header, Row, Rows)
-import List exposing (filter, map, maximum, minimum, unzip)
+import Chart.Prepare exposing (Column, Data, Row, Rows)
+import List exposing (map, maximum, unzip)
 import Tuple exposing (first, second)
-
-
-
--- this type may belong somewhere else since I can use it for the chart's size
 
 
 type alias ScaleFactors =

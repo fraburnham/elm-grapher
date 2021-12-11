@@ -7,19 +7,12 @@ import Csv
 import File exposing (File)
 import File.Select as Select
 import Html exposing (Html, button, div, input, text)
-import Html.Attributes exposing (placeholder, value)
+import Html.Attributes exposing (placeholder)
 import Html.Events exposing (onClick, onInput)
-import String
 import Task
 
 
-
--- fix indentation in elm-mode
--- may need to clobber the indentation settings for other "IDEs"
--- Need a styleguide or something. The indentation style elm-mode is providing has some magic I don't understand
--- install elm-format (there is some fuckery w/ npm i -g elm-format)
-
-
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -36,7 +29,7 @@ type Render
 
 
 type alias Model =
-    { csvData : Csv.Data -- This is a maybe so that we can pattern match to display the right stuff
+    { csvData : Csv.Data
     , xCol : String
     , yCol : String
     , render : Render

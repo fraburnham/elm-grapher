@@ -1,8 +1,8 @@
 module Chart exposing (render)
 
-import Chart.Prepare exposing (Column, Data, Header, Row, Rows)
+import Chart.Prepare exposing (Data, Row, Rows)
 import Chart.Scale as Scale exposing (Bound, Bounds)
-import Html exposing (Html, table, td, text, tr)
+import Html exposing (Html)
 import List exposing (map)
 import String
 import Svg exposing (circle, svg)

@@ -32,12 +32,12 @@ render chartData =
         scaledData =
             Scale.data (Bounds (Bound 0.0 300.0) (Bound 0.0 300)) chartData
     in
-    div [ HtmlAttr.style "padding" "10px" ]
+    div [ HtmlAttr.class "chart-container" ]
         [ svg
             [ SvgAttr.width "300"
             , SvgAttr.height "300"
             , SvgAttr.viewBox "0 0 305 305"
-            , SvgAttr.style "border: 1px solid"
+            , SvgAttr.class "chart"
             ]
             (rows scaledData.rows)
         ]

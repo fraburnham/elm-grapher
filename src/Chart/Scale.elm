@@ -23,6 +23,15 @@ type alias Bounds =
     }
 
 
+type alias AxisAdjuster =
+    Column -> Column
+
+
+yOriginAdjust : Bound -> Column -> Column
+yOriginAdjust { max } yCol =
+    abs (yCol - max)
+
+
 colExtreme : (List Float -> Maybe Float) -> List Column -> Float
 colExtreme fn cols =
     case fn cols of
@@ -66,16 +75,16 @@ column scaleFactor colData =
     colData * scaleFactor
 
 
-row : ScaleFactors -> Row -> Row
-row sf rowData =
+row : ScaleFactors -> AxisAdjuster -> Row -> Row
+row sf yAdjuster rowData =
     ( column sf.x (first rowData)
-    , column sf.y (second rowData)
+    , yAdjuster (column sf.y (second rowData))
     )
 
 
-rows : ScaleFactors -> Rows -> Rows
-rows sf rowsData =
-    map (row sf) rowsData
+rows : ScaleFactors -> AxisAdjuster -> Rows -> Rows
+rows sf yAdjuster rowsData =
+    map (row sf yAdjuster) rowsData
 
 
 data : Bounds -> Data -> Data
@@ -83,5 +92,8 @@ data bounds chartData =
     let
         sf =
             scaleFactors bounds chartData.rows
+
+        yAdjuster =
+            yOriginAdjust bounds.y
     in
-    Data chartData.header (rows sf chartData.rows)
+    Data chartData.header (rows sf yAdjuster chartData.rows)

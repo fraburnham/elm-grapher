@@ -27,16 +27,12 @@ type alias Scalers =
     }
 
 
-type alias AxisAdjuster =
-    Column -> Column
-
-
-scaler : Bound -> Bound -> Column -> Column
+scaler : Bound -> Bound -> Scaler
 scaler chartBound dataBound colData =
     (((colData - dataBound.min) / (dataBound.max - dataBound.min)) * (chartBound.max - chartBound.min)) + chartBound.min
 
 
-yOriginAdjust : Bound -> Column -> Column
+yOriginAdjust : Bound -> Scaler
 yOriginAdjust { max } yCol =
     abs (yCol - max)
 
@@ -78,28 +74,25 @@ column colScaler colData =
     colScaler colData
 
 
-row : Scalers -> AxisAdjuster -> Row -> Row
-row scalers yAdjuster rowData =
+row : Scalers -> Row -> Row
+row scalers rowData =
     ( column scalers.x (first rowData)
-    , yAdjuster (column scalers.y (second rowData))
+    , column scalers.y (second rowData)
     )
 
 
-rows : Scalers -> AxisAdjuster -> Rows -> Rows
-rows scalers yAdjuster rowsData =
-    map (row scalers yAdjuster) rowsData
+rows : Scalers -> Rows -> Rows
+rows scalers rowsData =
+    map (row scalers) rowsData
 
 
 data : Bounds -> Data -> Data
 data chartBounds chartData =
     let
-        yAdjuster =
-            yOriginAdjust chartBounds.y
-
         dataBounds =
             rowBounds chartData.rows
 
         scalers =
-            Scalers (scaler chartBounds.x dataBounds.x) (scaler chartBounds.y dataBounds.y)
+            Scalers (scaler chartBounds.x dataBounds.x) (scaler chartBounds.y dataBounds.y >> yOriginAdjust chartBounds.y)
     in
-    Data chartData.header (rows scalers yAdjuster chartData.rows)
+    Data chartData.header (rows scalers chartData.rows)

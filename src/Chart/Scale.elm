@@ -1,14 +1,8 @@
 module Chart.Scale exposing (Bound, Bounds, data)
 
 import Chart.Prepare exposing (Column, Data, Row, Rows)
-import List exposing (map, maximum, unzip)
+import List exposing (map, maximum, minimum, unzip)
 import Tuple exposing (first, second)
-
-
-type alias ScaleFactors =
-    { x : Float
-    , y : Float
-    }
 
 
 type alias Bound =
@@ -23,8 +17,23 @@ type alias Bounds =
     }
 
 
+type alias Scaler =
+    Column -> Column
+
+
+type alias Scalers =
+    { x : Scaler
+    , y : Scaler
+    }
+
+
 type alias AxisAdjuster =
     Column -> Column
+
+
+scaler : Bound -> Bound -> Column -> Column
+scaler chartBound dataBound colData =
+    (((colData - dataBound.min) / (dataBound.max - dataBound.min)) * (chartBound.max - chartBound.min)) + chartBound.min
 
 
 yOriginAdjust : Bound -> Column -> Column
@@ -42,8 +51,8 @@ colExtreme fn cols =
             0
 
 
-scaleFactors : Bounds -> Rows -> ScaleFactors
-scaleFactors bounds rowsData =
+rowBounds : Rows -> Bounds
+rowBounds rowsData =
     let
         unzipped =
             unzip rowsData
@@ -57,43 +66,40 @@ scaleFactors bounds rowsData =
         getMax =
             colExtreme maximum
 
-        xMax =
-            getMax xColumns
-
-        yMax =
-            getMax yColumns
+        getMin =
+            colExtreme minimum
     in
-    -- ignoring the possiblity that the chart could start somewhere other
-    -- than 0,0 for now
-    -- other stuff to consider is giving some margin at the edges of the
-    -- chart by subtracting the margin from the bounds
-    ScaleFactors (bounds.x.max / xMax) (bounds.y.max / yMax)
+    Bounds (Bound (getMin xColumns) (getMax xColumns)) (Bound (getMin yColumns) (getMax yColumns))
 
 
-column : Float -> Column -> Column
-column scaleFactor colData =
-    colData * scaleFactor
+column : Scaler -> Column -> Column
+column colScaler colData =
+    -- the fn signature here makes it seem like I'm doing something stupid
+    colScaler colData
 
 
-row : ScaleFactors -> AxisAdjuster -> Row -> Row
-row sf yAdjuster rowData =
-    ( column sf.x (first rowData)
-    , yAdjuster (column sf.y (second rowData))
+row : Scalers -> AxisAdjuster -> Row -> Row
+row scalers yAdjuster rowData =
+    ( column scalers.x (first rowData)
+    , yAdjuster (column scalers.y (second rowData))
     )
 
 
-rows : ScaleFactors -> AxisAdjuster -> Rows -> Rows
-rows sf yAdjuster rowsData =
-    map (row sf yAdjuster) rowsData
+rows : Scalers -> AxisAdjuster -> Rows -> Rows
+rows scalers yAdjuster rowsData =
+    map (row scalers yAdjuster) rowsData
 
 
 data : Bounds -> Data -> Data
-data bounds chartData =
+data chartBounds chartData =
     let
-        sf =
-            scaleFactors bounds chartData.rows
-
         yAdjuster =
-            yOriginAdjust bounds.y
+            yOriginAdjust chartBounds.y
+
+        dataBounds =
+            rowBounds chartData.rows
+
+        scalers =
+            Scalers (scaler chartBounds.x dataBounds.x) (scaler chartBounds.y dataBounds.y)
     in
-    Data chartData.header (rows sf yAdjuster chartData.rows)
+    Data chartData.header (rows scalers yAdjuster chartData.rows)

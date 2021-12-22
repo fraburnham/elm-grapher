@@ -1,5 +1,6 @@
 # Grapher
 
+A learning project to understand ADTs and elm. (Lots of stuff in here is probably bad/wrong/stupid)
 Graph csv data using elm
 
 ## Getting set up
